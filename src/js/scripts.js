@@ -2,48 +2,17 @@ import * as THREE from 'three'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
 import Globe from 'globe.gl';
 
-// const canvas = document.querySelector(".webgl")
-// const renderer = new THREE.WebGLRenderer({ canvas })
-// renderer.setSize(800, 800)
-
-// document.body.appendChild(renderer.domElement)
-
-// const scene = new THREE.Scene()
-// const camera = new THREE.PerspectiveCamera(
-//   75,
-//   window.innerWidth / window.innerHeight,
-//   0.1,
-//   1000
-// )
-
-// const orbit = new OrbitControls(camera, renderer.domElement)
-
-// const axesHelper = new THREE.AxesHelper(5)
-// scene.add(axesHelper)
-// camera.position.set(0, 2, 5)
-// orbit.update()
-
-// const boxGeometry = new THREE.BoxGeometry()
-// const boxMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00})
-// const box = new THREE.Mesh(boxGeometry, boxMaterial)
-// scene.add(box)
-
-// function animate() {
-//   box.rotation.x += 0.01
-//   box.rotation.y += 0.01
-//   renderer.render(scene, camera)
-// }
-
-// renderer.setAnimationLoop(animate)
-
-function ParseDMS(input) {
+function parseDMS(input) {
   var parts = input.split(/[^\d\w]+/);
-  var lat = ConvertDMSToDD(parts[0], parts[1], parts[2], parts[3]);
-  var lng = ConvertDMSToDD(parts[4], parts[5], parts[6], parts[7]);
-  return [lat, lng]
+  var lat = convertDMSToDD(parts[0], parts[1], parts[2], parts[3]);
+  var lng = convertDMSToDD(parts[4], parts[5], parts[6], parts[7]);
+  // Order must be like this: [longitude and latitude]
+  // Since only GeoJson Geometry is supported (mentioned in GitHub), we must follow its rules
+  // https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1
+  return [lng, lat]
 }
 
-function ConvertDMSToDD(degrees, minutes, seconds, direction) {
+function convertDMSToDD(degrees, minutes, seconds, direction) {
   degrees = parseFloat(degrees);
   minutes = parseFloat(minutes);
   seconds = parseFloat(seconds);
@@ -57,10 +26,10 @@ function ConvertDMSToDD(degrees, minutes, seconds, direction) {
 }
 
 function parseCoordinates(rawData) {
-  return rawData.map(ParseDMS);
+  return rawData.map(parseDMS);
 }
 
-const cData = [
+const centerData = [
   "07°49.3'S 158°31.9'W",
   "07°37.8'S 157°10.3'W",
   "05°49.9'S 148°07.7'W",
@@ -163,7 +132,7 @@ const cData = [
   "47°37.2'N 019°47.1'W"
 ]
 
-const sData = [
+const southData = [
   "08°27.0'S 158°20.2'W",
   "07°35.9'S 152°54.3'W",
   "06°11.4'S 146°37.9'W",
@@ -266,7 +235,7 @@ const sData = [
   "47°00.6'N 020°04.5'W",
 ]
 
-const nData = [
+const northData = [
   "07°11.4'S 158°43.9'W",
   "05°30.4'S 149°47.5'W",
   "04°20.3'S 145°29.5'W",
@@ -367,15 +336,42 @@ const nData = [
   "48°13.9'N 019°29.2'W",
 ]
 
-const gData = [
-  parseCoordinates(cData),
-  parseCoordinates(sData),
-  parseCoordinates(nData),
-]
+// Creating totality polygon
+const nPoints = parseCoordinates(northData)
+const sPoints = parseCoordinates(southData.reverse())
+const polygonCoordinates = nPoints.concat(sPoints)
+polygonCoordinates.push(nPoints[0])
 
-const globe = Globe()
+const greatestEclipse = parseDMS("25°17.4'N 104°08.3'W")
+
+const world = Globe()
+  (document.getElementById('globeViz'))
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
   .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
   .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
-  .pathsData(gData)
-  (document.getElementById('globeViz'));
+  .polygonCapColor(feat => 'rgba(200, 0, 0, 0.6)')
+  .polygonSideColor(() => 'rgba(0, 100, 0, 0.05)')
+  .polygonAltitude(0.005)
+  .polygonLabel(['Path of Totality'])
+  .pointOfView({
+    lat: greatestEclipse[1],
+    lng: greatestEclipse[0],
+  })
+
+// Replace this JSON object with your own data
+const countriesData = {
+  "features": [
+    {
+      "properties": {
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          polygonCoordinates
+        ]
+      }
+    }
+  ]
+};
+
+world.polygonsData(countriesData.features)
