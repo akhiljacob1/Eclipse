@@ -342,22 +342,6 @@ const sPoints = parseCoordinates(southData.reverse())
 const polygonCoordinates = nPoints.concat(sPoints)
 polygonCoordinates.push(nPoints[0])
 
-const greatestEclipse = parseDMS("25°17.4'N 104°08.3'W")
-
-const world = Globe()
-  (document.getElementById('globeViz'))
-  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-  .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-  .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
-  .polygonCapColor(feat => 'rgba(200, 0, 0, 0.6)')
-  .polygonSideColor(() => 'rgba(0, 100, 0, 0.05)')
-  .polygonAltitude(0.005)
-  .polygonLabel(['Path of Totality'])
-  .pointOfView({
-    lat: greatestEclipse[1],
-    lng: greatestEclipse[0],
-  })
-
 // Replace this JSON object with your own data
 const countriesData = {
   "features": [
@@ -374,4 +358,20 @@ const countriesData = {
   ]
 };
 
-world.polygonsData(countriesData.features)
+const greatestEclipse = parseDMS("25°17.4'N 104°08.3'W")
+
+const world = Globe()
+  (document.getElementById('globeViz'))
+  .width(window.innerWidth * 0.9)
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+  .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+  .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+  .polygonsData(countriesData.features)
+  .polygonCapColor(feat => 'rgba(200, 0, 0, 0.6)')
+  .polygonSideColor(() => 'rgba(0, 100, 0, 0.05)')
+  .polygonAltitude(0.005)
+  .polygonLabel(['Path of Totality'])
+  .pointOfView({
+    lat: greatestEclipse[1],
+    lng: greatestEclipse[0],
+  })
