@@ -342,7 +342,6 @@ const sPoints = parseCoordinates(southData.reverse())
 const polygonCoordinates = nPoints.concat(sPoints)
 polygonCoordinates.push(nPoints[0])
 
-// Replace this JSON object with your own data
 const countriesData = {
   "features": [
     {
